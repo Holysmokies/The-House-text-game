@@ -1,1 +1,498 @@
+print('\nWelcome to The House.\n')
+
+print("This game uses text commands such as:\n"
+      "UP/DOWN/LEFT/RIGHT/BACK/FORWARD for movement.\n"
+      "INSPECT/USE/PICKUP/DROP/INVENTORY for items.\n"
+      "Make sure to read all the text, if you need help you can type HELP or MAP, good luck!\n\n")
+print("NOTE: This game is in beta and is still being updated, if you encounter bugs please report them!\n\n")
+
+input('Press ENTER to Continue.\n\n')
+
+# TO DO ----------------------------------------
+# FILE MANAGEMENT
+# TEXT 'wait' AFTER LINES TO ALLOW PLAYERS TO READ
+# TEXT SCROLLING
+# MAKE TEXT EASIER TO READ
+# ENSURE PLAYER INPUTS CAN BE ALL CAPS (inital opening of door, etc...)
+# FINAL DEBUG
+#-----------------------------------------------
+
+#game states
+mast_lock=[0]
+cellar_lock=[0]
+candles=[0]
+knife=[0]
+ritual=[0]
+
+#player and room inventory management
+inv=set(())
+g_items=('silver key','skull key','flashlight','zippo','book of the occult','crowbar','can of gasoline','ominous effigy','knife')
+k_words=('use','pickup','drop')
+room=[0,0,-1]
+rm_hist=[]
+
+#library of room coordinates and items
+roominfo={
+    'Lower Main Hall': {'location': (0,0,1), 'roominv': ['ominous effigy']},
+    'Smoking Room': {'location': (1,0,1), 'roominv': ['silver key', 'zippo']},
+    'Kitchen': {'location': (-1,0,1), 'roominv': ['crowbar']},
+    'Upper Main Hall': {'location': (0,2,1), 'roominv': []},
+    "Chilren's Bedroom": {'location': (1,2,1), 'roominv': ['flashlight']},
+    'Master Bedroom': {'location': (-1,2,1), 'roominv': ['skull key']},
+    'Dining Hall': {'location': (0,0,2), 'roominv':[]},
+    'Store Room': {'location': (-2,0,1), 'roominv':[]},
+    'Cellar': {'location': (-2,-1,1), 'roominv':['can of gasoline','knife']},
+    'Cellar Staircase': {'location': (-2,-2,1), 'roominv':[]},
+    'Winding Staircase': {'location': (-2,-3,1), 'roominv':[]},
+    'Endless Staircase': {'location': (-2,-4,1), 'roominv':[]},
+    'Dark Cavern': {'location': (-2,-5,1), 'roominv':['book of the occult']}
+}
+
+
+
+def game():
+    #Outside - Game Start
+    if room[2] == -1:
+        print('It is a cold December night, lacking the comforting presence of the moonlight.'
+              '\n\nWhile on your way home from work, you hear a single, sharp scream come from an abandoned house.'
+              '\nYour eyes dart down the end of the street to where the noise came from.\nResting on the far end of the street, just out of reach of the lampposts illuminating the other houses,'
+              " you see it.\nIt feels as if the House is looking back at you, watching you,"
+              ' like a predator hiding in the brush, waiting for an opportune moment to strike.\n')
+        input("Press ENTER to continue.\n\n")
+        print('You think to yourself, "I should get home... These double shifts are making me start to hear th-"\n\n'
+              'Before you can finish the thought, a second scream echoes from the House down the street to where you stand.\n'
+              'This one makes your blood run cold, as if your primal instincts are begging you to run.'
+              '\nAgainst all logic and fear, You summon all your courage and begin walking towards the House,\n'
+              'thinking to yourself, "Ill just make sure whoever is in there is alright...".')
+        print('\nYou quickly arrive at the entrance to the abandoned House, its massive front doors towering above you as if they were made for gods instead of men.')
+        print('You raise your hand towards the doorknob, but hesitate just before opening the door.')
+
+        #init choice
+        def front_door(x):
+            #print(x)
+            if 'open' in x or 'enter' in x:
+                print('\nYou inhale deeply, as if to quell the voices in your head urging you to leave, before opening the door.\n')
+                room[2]+=2
+                rm_hist.append(loc_chk()[0])
+                game()
+            elif 'home' in x or 'back' in x or 'leave' in x: print('\nYour courage, and the blood in your face drain from you as you slowly back away from the door.\nYou decide that whoever, or whatever, made the screaming noise would have to solve their own problems.\nAs you continue your walk home, you put in your earphones, play some Nickelback, and are contented that nothing exciting (or dangerous) ever happens in your life.\n\nBAD ENDING 1'), play_again()
+            else: print('\nUnknown command.'), front_door(input('\nWhat do you do?\n'))
+        front_door(input('\nWhat do you do?\n'))
+
+    #main hall
+    elif room == [0,0,1]:
+        print('As you enter the Main Hall, you look around and see large paintings of well-dressed people who you do not recognize.\nA large staircase with red carpet climbs both the left and right sides of the room, beckoning you upstairs.\nThere are doors on both sides of the room, as well as a small door directly in front of you.')
+        opt=choice()
+        if 'open' in opt: print('There is nothing to open.'), choice()
+
+    #smoking room
+    elif room == [1,0,1]:
+        print('As you enter the Smoking Room the smell of old smoke and musky air assault your nose.\n Besides some boarded up windows and a large bookshelf, the only door is the one you came from to the right.')
+        if 'Gold Key' in inv: choice()
+        else: print('You think you hear the faint sound of whispering, but cannot tell where it is coming from.'), choice()
+
+    #kitchen
+    elif room == [-1,0,1]:
+        print('Upon entering the Kitchen you see dark stains covering the floor, counters, and walls. Youre not certain, but is that... blood?\nBesides the door you entered from to the left, you see a door at the end of the kitchen on the right.')
+        choice()
+
+    #dining room
+    elif room == [0,0,2]:
+        print('You look around a large room with a long dining table running its length.\n There is food still on the table, now in the late stages of decomposition.\nThe chairs on either side of the table look as if whoever was sat here got up suddenly.\nThe only way to get is back through the door you came from.\n')
+        choice()
+
+    #top of Main Hall stairs
+    elif room == [0,2,1]:
+        print('At the top of the staircase in the Main Hall there are two large doors, one to the left and one to the right.\n There is some sort of light coming from under the door on the right...')
+        choice()
+
+    #children's room
+    elif room == [1,2,1]:
+        print('You enter what looks to have once been a room for a child, toys still strewn across the floor.\nThough now in tatters, and littered with dust, you are reminded that this house was once filled with life and happiness.')
+        choice()
+
+    #master bedroom
+    elif room == [-1,2,1]:
+        #print('LOCK STATUS: '+ str(mast_lock))
+        #print(inv_chk('silver key'))
+        if mast_lock[0] == 1:
+            print('You walk into a large bedroom complete with a walk-in closet and a marble-decorated bathroom.\nThis room seems to be deteriorating more rapidly than the others, and there seems to be some type of mold spreading from behind the bed.')
+            choice()
+        elif mast_lock[0] == 0 and inv_chk('silver key'):
+            print('Perhaps the KEY you have could open this lock...\n'), back(), game()
+        elif mast_lock[0] == 0:
+            print('This door is locked, perhaps if you had a key...\n'), back(), game()
+        #else: print('ERROR'), choice()
+
+    #store room
+    elif room == [-2,0,1]:
+        if cellar_lock[0] == 0:
+            print('Judging by the variety of unopened bags and cans of food, this must have been the house Store Room.\n Nearly concealed behind the piles of baking goods, you see an ornately decorated keyhole...\n')
+        elif cellar_lock[0] == 1:
+            print('The same dusty bags of flour and sugar still line the walls of the Store Room.\n Where there was once a wall, now lies an opening to a cramped passage with stairs leading down.\n')
+        choice()
+
+    #cellar
+    elif room == [-2,-1,1]:
+        if cellar_lock[0] == 0:
+            print('It seems like this wall can move, but it wont budge...'), back(), game()
+        elif cellar_lock[0] == 0 and inv_chk('skull key'):
+            print('Perhaps the KEY you have fits the hole in the wall...'), back(), game()
+        elif cellar_lock[0] == 1 and not inv_chk('flashlight'):
+            print('It\'s too dark to see anything, you should look around for something to help see...\n'), back(), game()
+        elif cellar_lock[0] == 1 and inv_chk('flashlight'):
+            print('This must be the Cellar, it is particularly dark in here. Good thing you have a FLASHLIGHT.\nBesides the way back up to the Store Room, you see another stairwell leading further down.\n'), choice()
+
+    #Cellar Staircase
+    elif room == [-2,-2,1]:
+        if rm_hist[-2] == 'Cellar':
+            print('You begin descending the Cellar Staircase... even with a light it is too dark to see where it ends,\nbut surely there must be an end... right?')
+        elif rm_hist[-2] == 'Winding Staircase':
+            print('Nearly out of breath as you continue upwards, the staircase straightens, and the walls and steps regain the familiar look of masonry you saw in the Cellar.\n')
+        choice()
+
+    #Winding Staircase
+    elif room == [-2,-3,1]:
+        print('As you continue, you notice the walls and steps look more like natural stone than the masonry you saw further up.\nThe stairs twist and turn in random directions as if you were walking inside a cave rather than a house.\n')
+        choice()
+
+    #Endless Staircase
+    elif room == [-2,-4,1]:
+        if rm_hist[-2] == 'Winding Staircase': print('You take another step down and pause for a moment as you feel the air grow noticeatbly colder.\nAll noise fades away and for a moment you think you can hear footsteps coming down the stairs behind you.\nThe walls to either side of you give way to a large open space, peering off the side of the stairs you cannot see the bottom.\n')
+        elif rm_hist[-2] == 'Dark Cavern': print('As you walk up the seemingly endless set of stairs the hair on your neck and arms raise.\nYou get that feeling when you were a child going up the stairs at night, where you instinctively want to sprint as fast as you can lest whatever behind you catches you...\n')
+        choice()
+
+    #Dark Cavern
+    elif room == [-2,-5,1]:
+        if candles[0]==0 and knife[0]==0 and ritual[0]==0: print('You reach the bottom of the stairs and look around.\nYou cannot see the walls or ceiling of this cavern, all you see is an alter surrounded by unlit candles with a book in the center.\n You swear you can hear chanting... or... whispering? But as you look around, you see nothing.\nYou\'re not sure what to do next, but you get the feeling that there is something special about this book.\n'), choice()
+        elif candles[0]==1 and knife[0]==0 and ritual[0]==0: print('As you light the candles, what was once the sound of whispering becomes clearer.\nA chant in a language you do not know is being repeated, but you cannot tell where it is coming from.\nAll you can make out is... \'sanguis...sacrificium...liber\'.'), choice()
+        elif candles[0]==1 and knife[0]==1 and ritual[0]==0: print('You slide the knife across your hand and you recoil in pain.\nBlood drips from your hand to the cavern floor... with each drop, the chanting grows louder, and your pain subsides.\n What was once chanting in a foreign, unintelligeable language becomes as clear as your own thoughts.\n\'BLOOD, SACRIFICE, BOOK. FREE US FROM OUR PRISON.\'\n'), choice()
+        elif candles[0]==1 and knife[0]==1 and ritual[0]==1: print('All at once the chanting ceases, the pain in your hand stops, and the candles you lit go out. You are engulfed by the darkness of the cavern.\n Out of the silence you begin to hear scuttling around you. You reach for the flashlight, but in your haste drop it on the floor and hear the glass shatter.\n\n'
+                                                          'The scuttling grows louder, nearer. You frantically look all around you for movement... anything... but see nothing.\nAll you hear is the labored breathing and wheezing of something drawing closer.\n'
+                                                          'You turn around and scream as you see a lumbering humanoid figure sprinting towards you. Limbs contorted at impossible angles, gaping maws with sharp teeth where normal features of a face should be.\nYou manage to emit a final, guttural scream as the creature wraps itself around you.\n\n'
+                                                          'Your screams echo through the house, and down the street, falling upon the ears of another traveling home.\nAs the person hears the screams, they say to themselves, \'Ill just make sure whoever is in there is alright...\'.\n\nBAD ENDING 2.\nThank you for playing: The House!'), play_again()
+
+
+
+
+'''END OF GAME CODE - START OF SYSTEMS CODE (THIS LINE IS 163)
+
+CHOICE         -     186
+MOVE           -     196
+INVALID MOVE   -     215
+BACK           -     228
+OPEN           -     248
+INSPECT        -     253
+LIST TO STRING -     268
+LOCATION CHECK -     279
+INVENTORY CHECK -    289
+PICKUP         -     294
+USE            -     323
+DROP            -    346 
+FILTER INPUT     -   365
+POCKETS/INVENTORY -  397
+PLAY AGAIN       -   406
+HELP            -    415
+MAP             -    421
+
+'''
+
+
+def choice():
+    choice1 = input('\nWhat do you do?\n').lower()
+    if 'left' in choice1 or 'right' in choice1 or 'up' == choice1 or 'down' in choice1 or 'forward' in choice1 or 'back' in choice1: print("----------------------------------------"), move(choice1)
+    elif 'inspect' in choice1: print("----------------------------------------"), inspect()
+    elif 'pickup' in choice1: print("----------------------------------------"), pickup(choice1)
+    elif 'drop' in choice1: print("----------------------------------------"), drop(choice1)
+    elif 'open' in choice1 or 'enter' in choice1: print("----------------------------------------"), open()
+    elif 'use' in choice1: print("----------------------------------------"), use(choice1)
+    elif 'inventory' in choice1 or 'items' in choice1: print("----------------------------------------"), pockets()
+    elif 'quit' in choice1: print("----------------------------------------"), quit()
+    elif 'map' in choice1: print("----------------------------------------"), print(map_it())
+    elif 'help' in choice1: print("----------------------------------------"), help_game()
+    elif 'give.admin' in choice1: print("----------------------------------------"), admin_priv()
+    else: print('Unknown command - choice.'), choice()
+    return choice1
+
+
+def move(x):
+    try:
+        #print(room)
+        #pr_rm='\nYou leave the ' + str(loc_chk()[0]) + '.'
+        if 'left' in x: room[0] += 1
+        elif 'right' in x: room[0] -= 1
+        elif 'up' in x and room==[0,0,1]: room[1] += 2
+        elif 'up' in x: room[1] +=1
+        elif 'down' in x and room==[0,2,1]: room[1] -=2
+        elif 'down' in x: room[1] -= 1
+        elif 'forward' in x: room[2] += 1
+        elif 'back' in x: back()
+        else: print('Unknown command-move.'), choice()
+
+        if rm_hist[-1]==str(loc_chk()[0]):pass
+        else: rm_hist.append(str(loc_chk()[0]))
+
+        #print(pr_rm)
+        #print('You enter the ' + str(loc_chk()[0]) + '.\n')
+        #print(rm_hist,'\n')
+    except TypeError: print('You walk into a wall and question your choices.'), invld_move()
+    game()
+
+
+def invld_move():
+    #print(room)
+    for rm in roominfo:
+        if rm==rm_hist[-1]:
+            rloc=roominfo[rm]['location']
+            i=0
+            while i<len(room):
+                room[i]=rloc[i]
+                i=i+1
+    #print(rm_hist,'\n')
+    choice()
+
+
+def back():
+    if len(rm_hist)>1:
+        # len starts at 1 not 0, we want indexes
+        rl=len(rm_hist)-1
+        # rl-1 for the room immediately preceeding the current
+        previous_room=rm_hist[rl-1]
+        rvalues=roominfo[previous_room]
+        rval_loc=[x for x in rvalues['location']]
+        i=0
+        while i<len(room):
+            room[i]=rval_loc[i]
+            i=i+1
+        rm_hist.pop(-1)# rm_hist.pop(-1)
+        #print(rm_hist,'\n')
+    else: print('Cannot go back.'), rm_hist.pop(-1)
+    #print(room,loc_chk()[0])
+
+
+def open():
+    if room==[0,0,-1]: True
+    else: choice()
+
+
+def inspect():
+    cur_rm=loc_chk()
+    try:
+        for k in roominfo:
+            if cur_rm[0]==k:
+                x=roominfo[k]['roominv']
+                if len(x)>0:
+                    rtn=l_to_s(x)
+                    print('Upon inspecting the '+k+' you see a '+rtn+'.')
+                else: print('You look around and find nothing.')
+    except TypeError: print('You look around and find nothing.')
+    choice()
+    #print(cur_rm[1])
+
+
+def l_to_s(x):
+    rtn=str()
+    if len(x)>1:
+        i=1
+        for item in x:
+            if i<len(x): rtn+=str(item.upper())+', '; i=i+1
+            elif i==len(x): rtn+='and a '+str(item.upper())
+    else: rtn+=str(x[0].upper())
+    return rtn
+
+
+def loc_chk():
+    #print('Current Room: '+str(room))
+    for k in roominfo:
+        #print(k)
+        for k2 in roominfo[k]:
+            if 'location'==k2 and list(roominfo[k][k2])==room:
+                #print('Current Room: ',k)
+                return (k, roominfo[k][k2])
+
+
+def inv_chk(x):
+    if x in inv: return True
+    if x not in inv: return False
+
+
+def pickup(x):
+    # NEEDS CODING FOR RANDOM INPUTS TO FIND 'pickup x - DONE'
+    y = filter(x)
+    #print(y)
+    redun=[]
+    if len(inv) == 3: print('You cant carry any more!'), choice()
+    elif len(inv) < 3:
+        cur_room=loc_chk()
+        crinv=roominfo[cur_room[0]]['roominv']
+        # for item in room inventory
+        for i in crinv:
+            # print(i)
+            # for item in filtered list
+            for u in y[1]:
+                # if typed item is in room inventory
+                #print(u, i)
+                if u in i:
+                    redun.append(i)
+                    #print(i+' added to pickup list. Redun length: '+str(len(redun)))
+        #print(redun)
+        if len(redun) < 1:
+            print('You dont have that item. - PICKUP')
+        else:
+            for n in redun:
+                inv.add(n)
+                print('You pickup the ' + n.upper() + ' from the ' + cur_room[0].upper() + ' floor.')
+                roominfo[cur_room[0]]['roominv'].remove(n)
+        choice()
+
+
+def use(x):
+    y = filter(x)
+    #print(y)
+    use_success=False
+    for i in y[1]:
+        if i in inv:
+            if room == [0, 2, 1] and mast_lock[0] == 0:
+                print('You insert the SILVER KEY into the locked door, and just as it finishes turning, it breaks off in the lock.\nSILVER KEY has been destroyed.')
+                mast_lock[0] = 1
+                inv.remove('silver key')
+                use_success=True
+                choice()
+            elif room == [-2, 0, 1] and cellar_lock[0]==0:
+                print('As you turn the SKULL KEY you hear an audible *click* as the wall slowly slide back, revealing a staircase leading down...\nYou can see nothing but a sea of blackness, as if you were staring straight into a black hole.\nThe SKULL KEY gets stuck in the mechanism and the way remains open.')
+                cellar_lock[0]=1
+                inv.remove('skull key')
+                use_success=True
+                choice()
+            elif room == [-2, -5, 1] and candles[0] == 0 and knife[0] == 0 and ritual[0] == 0 and i=='zippo':
+                #USE LIGHTER
+                candles[0] = 1
+                use_success=True
+                game()
+            elif room == [-2, -5, 1] and candles[0] == 1 and knife[0] == 0 and ritual[0] == 0 and i=='knife':
+                #USE KNIFE
+                knife[0] = 1
+                use_success = True
+                game()
+            elif room == [-2, -5, 1] and candles[0] == 1 and knife[0] == 1 and ritual[0] == 0 and i=='book':
+                #USE BOOK (not in inventory)
+                ritual[0] = 1
+                use_success = True
+                game()
+            else: print('You stare intently at the '+i.upper()+', but nothing happens...')
+    if use_success:
+        pass
+    if not use_success:
+        print('You what mate? (You dont have that item.)'), choice()
+
+
+def drop(x):
+    y=filter(x)
+    #print(y)
+    cur_room = loc_chk()
+    droplist=[]
+    inv_iter=[x for x in inv]
+    for i in inv_iter:
+        for u in y[1]:
+            if u in i:
+                inv.remove(i)
+                droplist.append(i)
+    if len(droplist)<1: print('You dont have that item. - DROP')
+    else:
+        for n in droplist:
+            roominfo[cur_room[0]]['roominv'].append(n)
+            print('You drop the '+n.upper()+' on the '+cur_room[0].upper()+' floor.')
+    choice()
+
+
+def filter(x):
+    cmd = []
+    itm = []
+    invlist = ['key','crowbar','knife','light','zippo','book','effigy','gas','all']
+    for command in k_words:
+        if command in x: cmd.append(command)
+
+    if len(cmd) == 1:
+        for item in invlist:
+            try:
+                #print('ITEM: '+item)
+                y = x.index(item)
+                z = x[y:y+len(item)]
+                if z == 'all':
+                    itm = invlist
+                else:
+                    for it in g_items:
+                        if z in it:
+                            #print(it)
+                            itm.append(it)
+                            #print(cmd,itm)
+            except ValueError: pass
+        return cmd, itm
+    elif len(cmd)>1:
+        print('Too many commands given.')
+        choice()
+    else:
+        print('No valid command given.')
+        choice()
+
+
+def pockets():
+    pocket=[x.upper() for x in inv]
+    i=0
+    for item in pocket:
+        i=i+1
+    print('Inventory ['+str(i)+'/3]:'+str(pocket))
+    choice()
+
+
+def play_again():
+    pa=input('\nPlay Again?\n').lower()
+    if 'yes' in pa: game()
+    if 'no' in pa: None
+
+
+def help_game():
+    print('Directional Commands: UP/DOWN/LEFT/RIGHT/FORWARD/BACK\n',
+          'Inventory Commands: INSPECT/PICKUP/DROP/USE/INVENTORY/ITEMS\n',
+          'You can also type MAP for a visual aid.')
+    choice()
+
+
+def map_it():
+    maparrows = ['LEFT', 'UP','DOWN','RIGHT', 'FORWARD', 'BACK']
+    cur_room=loc_chk()
+    left_right=cur_room[1][0]
+    forward_back=cur_room[1][2]
+    up_down=cur_room[1][1]
+    to_go=[]
+    print('\nYou are in the: '+cur_room[0].upper()+'.')#\nLocation: '+str(cur_room[1])+'.')
+    for k in roominfo:
+        #print((left_right,up_down,forward_back),k,roominfo[k]['location'])
+        if (left_right + 1, up_down, forward_back) == roominfo[k]['location']: to_go.append(maparrows[0])
+        if (left_right - 1, up_down, forward_back) == roominfo[k]['location']: to_go.append(maparrows[3])
+        if (left_right, up_down, forward_back + 1) == roominfo[k]['location']: to_go.append(maparrows[4])
+        if (left_right, up_down, forward_back - 1) == roominfo[k]['location']: to_go.append(maparrows[5])
+        if (left_right, up_down + 1, forward_back) == roominfo[k]['location']: to_go.append(maparrows[1])
+        if (left_right, up_down - 1, forward_back) == roominfo[k]['location']: to_go.append(maparrows[2])
+    if cur_room[0] == 'Lower Main Hall': to_go.append(maparrows[1])
+    if cur_room[0] == 'Upper Main Hall': to_go.append(maparrows[2])
+    print('You can go:\n'+l_to_s(to_go))
+    print('(You can always go BACK!)')
+    choice()
+
+
+def admin_priv():
+    room[0] = -2
+    room[1] = -5
+    room[2] = 1
+    inv.add('zippo')
+    inv.add('knife')
+    inv.add('flashlight')
+    cellar_lock[0] = 1
+    mast_lock[0] = 1
+    choice()
+
+
+game()
+
 
